@@ -3,7 +3,7 @@ import time
 from flask import Flask, jsonify, request
 from selenium import webdriver
 from selenium.common import NoSuchElementException
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -12,9 +12,9 @@ app = Flask(__name__)
 
 def create_webdriver_options():
     options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument('disable-gpu')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     return options
 
 
@@ -66,7 +66,7 @@ def get_kakao_place_info():  # put application's code here
     page_url = request.args.get("page_url")
 
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
+        service=ChromeService(executable_path=ChromeDriverManager().install()),
         options=create_webdriver_options()
     )
 
@@ -80,6 +80,8 @@ def get_kakao_place_info():  # put application's code here
     opening_hours, closing_hours = get_business_hours(m_article)
     homepage_url = get_homepage_url(m_article)
 
+    driver.quit()
+
     return jsonify({
         'opening_hours': opening_hours,
         'closing_hours': closing_hours,
@@ -87,5 +89,10 @@ def get_kakao_place_info():  # put application's code here
     })
 
 
+@app.route('/')
+def home():
+    return "hello"
+
+
 if __name__ == '__main__':
-    app.run()
+    app.run('0.0.0.0', port=5000, debug=True)
